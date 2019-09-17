@@ -1,7 +1,7 @@
 ---
 title: "Tidy Tuesday: US National Parks Visits Safer Parks Dataset"
 author: "KGJ"
-date: "9/16/2019"
+date: "9/17/2019"
 output: html_document
 ---
 
@@ -22,9 +22,13 @@ presidents <- readr::read_csv("https://gist.githubusercontent.com/namuol/2657233
 
 ```{r wrangle }
 
-presidents$year_start <- as.numeric(str_sub(presidents$`Took office`, start= -4) )
-presidents$year_end <- as.numeric(str_sub(presidents$`Left office`, start= -4) )
-presidents[presidents$President =="Barack Obama",]$year_end <- 2017
+presidents$year_start <- as.numeric(str_sub(presidents$`Took office`, start= -4) ) -1
+presidents$year_end <- as.numeric(str_sub(presidents$`Left office`, start= -4) ) - 1
+
+presidents$date_start <- dmy(presidents$`Took office` ) 
+presidents$date_end <- dmy(presidents$`Left office`)
+
+presidents[presidents$President =="Barack Obama",]$date_end <- ymd("20161231")
 presidents$Number_name <- paste(presidents$Presidency, "-", word(presidents$President,-1) )
 
 presidents <- presidents %>%
@@ -35,22 +39,24 @@ WH_park_visits <- park_visits %>%
   filter(year != "Total")
 
 WH_park_visits$year <- as.numeric(WH_park_visits$year)
+WH_park_visits$mid_year <- ymd(paste0(WH_park_visits$year,"/06/30"))
 ```
-
 
 ```{r plot}
 WH_park_visits %>%
   ggplot() + 
-  geom_rect(data = presidents, aes(xmin = year_start, xmax = year_end, ymin = -Inf, ymax = Inf, fill = Number_name), alpha = 0.4) +
-  geom_line(mapping = aes(x = year, y = visitors)) +
-  geom_vline(xintercept=c(2000+9/12), linetype="dotted") +
-  geom_text(aes(x=(2001+9/12), label="Sept 11, 2001", y=1700000),nudge_x= 4.5) +
+  geom_rect(data = presidents, aes(xmin = date_start, xmax = date_end, ymin = -Inf, ymax = Inf, fill = Number_name), alpha = 0.4) +
+  geom_line(mapping = aes(x = mid_year, y = visitors)) +
+  geom_vline(xintercept=ymd("20010911"), linetype="dotted") +
+  geom_text(aes(x=(ymd("20010911")), label="Sept 11, 2001", y=1700000),nudge_x= 4.5) +
   ggtitle(label = "White House National Park Visits",
           subtitle = "by Presidential Term, 1954-2016") +
   labs(caption = "Source: dataisplural/data.world | gist.github.com/namuol, h/t  tidytuesday") +
   scale_y_continuous(name="Vistors", labels = scales::comma) +
   scale_fill_viridis_d(name  ="President",option = "inferno")+
-   scale_x_continuous(name="Year", limits = c(1953, 2017), expand = expand_scale(mult = c(0.01, 0.01)), breaks = seq(from = 1953, to = 2017, by = 4) ) +
+  scale_x_date(name="Year", limits = c(ymd("19530101"), ymd("20161231")), expand = expand_scale(mult = c(0.01, 0.01)), date_breaks = "4 year", date_labels = "%Y" ) +
       theme(legend.position="bottom", plot.subtitle = element_text(face = "italic"))
 
 ```
+
+
