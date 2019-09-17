@@ -48,7 +48,7 @@ WH_park_visits %>%
   geom_rect(data = presidents, aes(xmin = date_start, xmax = date_end, ymin = -Inf, ymax = Inf, fill = Number_name), alpha = 0.4) +
   geom_line(mapping = aes(x = mid_year, y = visitors)) +
   geom_vline(xintercept=ymd("20010911"), linetype="dotted") +
-  geom_text(aes(x=(ymd("20010911")), label="Sept 11, 2001", y=1700000),nudge_x= 4.5) +
+  geom_text(aes(x=(ymd("20010911")), label="Sept 11, 2001", y=1700000),nudge_x= 1900) +
   ggtitle(label = "White House National Park Visits",
           subtitle = "by Presidential Term, 1954-2016") +
   labs(caption = "Source: dataisplural/data.world | gist.github.com/namuol, h/t  tidytuesday") +
