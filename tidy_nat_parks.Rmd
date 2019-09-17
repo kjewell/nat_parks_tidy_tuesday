@@ -1,0 +1,56 @@
+---
+title: "Tidy Tuesday: US National Parks Visits Safer Parks Dataset"
+author: "KGJ"
+date: "9/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+list_of_packages <- c("janitor", "tidyverse", "lubridate", "ggthemes", "RColorBrewer", "rvest")
+lapply(list_of_packages, library, character.only = TRUE)
+```
+
+
+## Quick look at White House Visits by Presidential Term
+```{r get_data}
+park_visits <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-09-17/national_parks.csv")
+presidents <- readr::read_csv("https://gist.githubusercontent.com/namuol/2657233/raw/74135b2637e624848c163759be9cd14ae33f5153/presidents.csv")
+#thanks to https://gist.github.com/namuol
+```
+
+
+```{r wrangle }
+
+presidents$year_start <- as.numeric(str_sub(presidents$`Took office`, start= -4) )
+presidents$year_end <- as.numeric(str_sub(presidents$`Left office`, start= -4) )
+presidents[presidents$President =="Barack Obama",]$year_end <- 2017
+presidents$Number_name <- paste(presidents$Presidency, "-", word(presidents$President,-1) )
+
+presidents <- presidents %>%
+  filter(year_start >  1950)
+
+WH_park_visits <- park_visits %>%  
+  filter(parkname == "White House") %>%
+  filter(year != "Total")
+
+WH_park_visits$year <- as.numeric(WH_park_visits$year)
+```
+
+
+```{r plot}
+WH_park_visits %>%
+  ggplot() + 
+  geom_rect(data = presidents, aes(xmin = year_start, xmax = year_end, ymin = -Inf, ymax = Inf, fill = Number_name), alpha = 0.4) +
+  geom_line(mapping = aes(x = year, y = visitors)) +
+  geom_vline(xintercept=c(2000+9/12), linetype="dotted") +
+  geom_text(aes(x=(2001+9/12), label="Sept 11, 2001", y=1700000),nudge_x= 4.5) +
+  ggtitle(label = "White House Visits",
+          subtitle = "by Presidential Term, 1954-2016") +
+  labs(caption = "Source: dataisplural/data.world | gist.github.com/namuol, h/t  tidytuesday") +
+  scale_y_continuous(name="Vistors", labels = scales::comma) +
+  scale_fill_viridis_d(name  ="President",option = "inferno")+
+   scale_x_continuous(name="Year", limits = c(1953, 2017), expand = expand_scale(mult = c(0.01, 0.01)), breaks = seq(from = 1953, to = 2017, by = 4) ) +
+      theme(legend.position="bottom", plot.subtitle = element_text(face = "italic"))
+
+```
